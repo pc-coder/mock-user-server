@@ -1,11 +1,15 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-users = {
+# Original seed data
+original_users = {
     1: {"id": 1, "name": "Alice", "email": "alice@example.com"},
     2: {"id": 2, "name": "Bob", "email": "bob@example.com"}
 }
+
+# Current working copy
+users = original_users.copy()
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -23,7 +27,7 @@ def create_user():
     data = request.get_json()
     if not data or 'name' not in data or 'email' not in data:
         return jsonify({"error": "Invalid input"}), 400
-    user_id = max(users.keys()) + 1
+    user_id = max(users.keys(), default=0) + 1
     user = {"id": user_id, "name": data['name'], "email": data['email']}
     users[user_id] = user
     return jsonify(user), 201
@@ -45,6 +49,12 @@ def delete_user(user_id):
         return jsonify({"error": "User not found"}), 404
     del users[user_id]
     return jsonify({"message": "User deleted"}), 200
+
+@app.route('/reset', methods=['POST'])
+def reset_data():
+    global users
+    users = original_users.copy()
+    return jsonify({"message": "Data has been reset"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050)
